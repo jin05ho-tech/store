@@ -1,92 +1,206 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>자동 이미지 다운로드 (가나다)</title>
-  <style>
-    html,body{height:100%;margin:0;font-family: -apple-system, BlinkMacSystemFont, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif}
-    .wrap{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
-    a.button{display:inline-block;padding:10px 16px;border-radius:8px;background:#0066ff;color:#fff;text-decoration:none}
-    p.note{color:#444;font-size:14px}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>평가 점수 확률 계산기</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            text-align: center;
+            color: #444;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .input-group input {
+            width: calc(100% - 10px);
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .input-inline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .input-inline label {
+            width: 30%;
+            font-weight: normal;
+        }
+        .input-inline input {
+            width: 65%;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #e9ecef;
+            text-align: center;
+            font-size: 1.2em;
+        }
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>자동 이미지 다운로드 테스트</h1>
-    <p class="note">페이지가 열리면 "가나다"가 적힌 PNG 이미지가 자동으로 다운로드됩니다. 수동으로 다시 받으려면 버튼을 눌러주세요.</p>
-    <a id="manualDownload" class="button" href="#">수동 다운로드</a>
-  </div>
 
-  <script>
-    // 이미지(가나다)를 그려서 PNG로 다운로드하는 함수
-    function createGanadaPngBlob(text, options = {}) {
-      const padding = options.padding ?? 40;
-      const fontSize = options.fontSize ?? 140;
-      const fontFamily = options.fontFamily ?? 'Noto Sans KR, Apple SD Gothic Neo, Malgun Gothic, system-ui, sans-serif';
-      // 임시 캔버스로 텍스트 크기 측정
-      const measureCanvas = document.createElement('canvas');
-      const mctx = measureCanvas.getContext('2d');
-      mctx.font = `bold ${fontSize}px ${fontFamily}`;
-      const metrics = mctx.measureText(text);
-      const textWidth = Math.ceil(metrics.width);
-      const textHeight = Math.ceil(fontSize * 1.2);
+    <div class="container">
+        <h1>평가 점수 확률 계산기</h1>
+        <p>몬테카를로 시뮬레이션 기반으로 확률을 계산합니다.</p>
+        
+        <h2>확률 및 점수 설정</h2>
+        <div class="input-group">
+            <div class="input-inline">
+                <label for="probEX">EX 확률 (%)</label>
+                <input type="number" id="probEX" value="5" min="0" max="100">
+                <label for="scoreEX">점수</label>
+                <input type="number" id="scoreEX" value="3">
+            </div>
+            <div class="input-inline">
+                <label for="probVG">VG 확률 (%)</label>
+                <input type="number" id="probVG" value="15" min="0" max="100">
+                <label for="scoreVG">점수</label>
+                <input type="number" id="scoreVG" value="2">
+            </div>
+            <div class="input-inline">
+                <label for="probGD">GD 확률 (%)</label>
+                <input type="number" id="probGD" value="74" min="0" max="100" readonly>
+                <label for="scoreGD">점수</label>
+                <input type="number" id="scoreGD" value="1">
+            </div>
+            <div class="input-inline">
+                <label for="probNI">NI 확률 (%)</label>
+                <input type="number" id="probNI" value="5" min="0" max="100">
+                <label for="scoreNI">점수</label>
+                <input type="number" id="scoreNI" value="-1">
+            </div>
+            <div class="input-inline">
+                <label for="probUN">UN 확률 (%)</label>
+                <input type="number" id="probUN" value="1" min="0" max="100">
+                <label for="scoreUN">점수</label>
+                <input type="number" id="scoreUN" value="-2">
+            </div>
+        </div>
+        
+        <h2>계산 조건 설정</h2>
+        <div class="input-group">
+            <label for="years">누적 연도</label>
+            <input type="number" id="years" value="11" min="1">
+        </div>
+        <div class="input-group">
+            <label for="targetScore">목표 총점 (이상)</label>
+            <input type="number" id="targetScore" value="12">
+        </div>
+        <div class="input-group">
+            <label for="simulations">시뮬레이션 횟수 (정확도에 영향)</label>
+            <input type="number" id="simulations" value="100000" min="1000">
+        </div>
 
-      const canvas = document.createElement('canvas');
-      canvas.width = textWidth + padding * 2;
-      canvas.height = textHeight + padding * 2;
-      const ctx = canvas.getContext('2d');
+        <button onclick="calculateProbability()">확률 계산하기</button>
+        
+        <div id="result">
+            <p>계산 결과가 여기에 표시됩니다.</p>
+        </div>
+    </div>
 
-      // 배경
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    <script>
+        function updateGDProbability() {
+            const probEX = parseFloat(document.getElementById('probEX').value) || 0;
+            const probVG = parseFloat(document.getElementById('probVG').value) || 0;
+            const probNI = parseFloat(document.getElementById('probNI').value) || 0;
+            const probUN = parseFloat(document.getElementById('probUN').value) || 0;
+            const probGD = 100 - (probEX + probVG + probNI + probUN);
+            document.getElementById('probGD').value = probGD.toFixed(2);
+        }
 
-      // 텍스트
-      ctx.font = `bold ${fontSize}px ${fontFamily}`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#111111';
-      ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+        document.getElementById('probEX').addEventListener('input', updateGDProbability);
+        document.getElementById('probVG').addEventListener('input', updateGDProbability);
+        document.getElementById('probNI').addEventListener('input', updateGDProbability);
+        document.getElementById('probUN').addEventListener('input', updateGDProbability);
 
-      return new Promise((resolve) => {
-        canvas.toBlob((blob) => resolve(blob), 'image/png');
-      });
-    }
+        function calculateProbability() {
+            const probEX = parseFloat(document.getElementById('probEX').value) / 100;
+            const scoreEX = parseFloat(document.getElementById('scoreEX').value);
+            const probVG = parseFloat(document.getElementById('probVG').value) / 100;
+            const scoreVG = parseFloat(document.getElementById('scoreVG').value);
+            const probGD = parseFloat(document.getElementById('probGD').value) / 100;
+            const scoreGD = parseFloat(document.getElementById('scoreGD').value);
+            const probNI = parseFloat(document.getElementById('probNI').value) / 100;
+            const scoreNI = parseFloat(document.getElementById('scoreNI').value);
+            const probUN = parseFloat(document.getElementById('probUN').value) / 100;
+            const scoreUN = parseFloat(document.getElementById('scoreUN').value);
+            
+            const years = parseInt(document.getElementById('years').value);
+            const targetScore = parseInt(document.getElementById('targetScore').value);
+            const simulations = parseInt(document.getElementById('simulations').value);
 
-    async function triggerDownload(blob, filename) {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      // 메모리 해제
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }
+            if (probEX + probVG + probGD + probNI + probUN !== 1) {
+                // GD 확률이 자동으로 계산되므로 이 조건은 대체로 충족되나, 혹시 모를 오차를 대비
+                console.warn("확률 총합이 100%가 아닐 수 있습니다. GD 확률이 자동으로 조정됩니다.");
+            }
 
-    async function autoDownload() {
-      try {
-        const blob = await createGanadaPngBlob('가나다', { fontSize: 140 });
-        await triggerDownload(blob, 'ganada.png');
-      } catch (e) {
-        console.error('자동 다운로드 실패', e);
-      }
-    }
+            const grades = ['EX', 'VG', 'GD', 'NI', 'UN'];
+            const probabilities = [probEX, probVG, probGD, probNI, probUN];
+            const scores = [scoreEX, scoreVG, scoreGD, scoreNI, scoreUN];
 
-    // 페이지가 로드되면 자동으로 다운로드 시도
-    window.addEventListener('load', () => {
-      // 자동 트리거 (브라우저 정책에 따라 일부 환경에서는 차단될 수 있음)
-      autoDownload();
+            let successfulSimulations = 0;
 
-      // 수동 다운로드 버튼 연결
-      const btn = document.getElementById('manualDownload');
-      btn.addEventListener('click', async (ev) => {
-        ev.preventDefault();
-        const blob = await createGanadaPngBlob('가나다', { fontSize: 140 });
-        await triggerDownload(blob, 'ganada.png');
-      });
-    });
-  </script>
+            for (let i = 0; i < simulations; i++) {
+                let totalScore = 0;
+                for (let j = 0; j < years; j++) {
+                    const random = Math.random();
+                    let cumulativeProb = 0;
+                    for (let k = 0; k < grades.length; k++) {
+                        cumulativeProb += probabilities[k];
+                        if (random < cumulativeProb) {
+                            totalScore += scores[k];
+                            break;
+                        }
+                    }
+                }
+                if (totalScore >= targetScore) {
+                    successfulSimulations++;
+                }
+            }
+
+            const probability = (successfulSimulations / simulations) * 100;
+            document.getElementById('result').innerHTML = `<p><strong>${years}년 동안 ${targetScore}점 이상 취득할 확률:</strong></p><h2>${probability.toFixed(2)}%</h2>`;
+        }
+
+        // 페이지 로드 시 GD 확률 초기화
+        window.onload = updateGDProbability;
+    </script>
 </body>
 </html>
